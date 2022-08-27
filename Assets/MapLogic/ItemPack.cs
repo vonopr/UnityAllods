@@ -70,6 +70,16 @@ public class ItemPack : IEnumerable<Item>
             return mOut;
         }
     }
+    
+    public bool IsEmptyAt(int position)
+    {
+      return ItemList[position] == null;
+    }
+    
+    public void RemoveItemsAt(int position)
+    {
+      ItemList.RemoveAt(position);
+    }
 
     private void UpdateParent()
     {

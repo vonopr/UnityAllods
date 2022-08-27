@@ -270,6 +270,7 @@ class ShopScreen : FullscreenView
             o_ShelfItems.Pack.PutItem(index, item);
             return true;
         };
+        AddGhostItems(o_ShelfItems);
 
         //
         o_TableItems = Utils.CreateObjectWithScript<ItemView>();
@@ -293,7 +294,7 @@ class ShopScreen : FullscreenView
             o_ButtonTextRenderers[i] = new AllodsTextRenderer(Fonts.Font4, Font.Align.Center, 128, Fonts.Font4.LineHeight * 2, false);
             o_ButtonTextRenderers[i].Material.color = new Color32(0xBD, 0x9E, 0x4A, 0xFF);
             o_ButtonTextObjects[i] = o_ButtonTextRenderers[i].GetNewGameObject();
-            
+
             PositionObject(o_ButtonTextObjects[i], o_ShopBaseOffset, new Vector3(ButtonTextPositions[i].x, ButtonTextPositions[i].y, -2), 100);
         }
 
@@ -322,6 +323,25 @@ class ShopScreen : FullscreenView
             {
                 case KeyCode.Escape:
                     ProcessQuit();
+                    break;
+                case KeyCode.DownArrow or KeyCode.UpArrow:
+                    int first_viewed_item = o_ShelfItems.Scroll;
+                    int last_viewed_item = o_ShelfItems.Scroll + o_ShelfItems.InvHeight * o_ShelfItems.InvWidth - 1;
+                    if (e.keyCode == KeyCode.DownArrow)
+                    {
+                        if (last_viewed_item < o_ShelfItems.Pack.Count)
+                        {
+                            o_ShelfItems.Scroll += o_ShelfItems.InvWidth;
+                        }
+                    }
+                    else
+                    {
+                        if (first_viewed_item > 0)
+                        {
+                            o_ShelfItems.Scroll -= o_ShelfItems.InvWidth;
+                        }
+                    }
+                    o_ShelfItems.Update();
                     break;
             }
         }
@@ -371,8 +391,10 @@ class ShopScreen : FullscreenView
                         break;
                     case 1:
                         ProcessBuy();
+                        AddGhostItems(o_ShelfItems);
                         break;
                     case 2:
+                        RemoveGhostItems(o_ShelfItems);
                         ProcessSell();
                         break;
                     case 3:
@@ -449,6 +471,33 @@ class ShopScreen : FullscreenView
     private void ProcessQuit()
     {
         Client.SendLeaveStructure();
+    }
+
+    private void AddGhostItems(ItemView ShelfItems)
+    {
+        bool GhostRow = true;
+        for (int i = ShelfItems.Pack.Count - ShelfItems.InvWidth; i < ShelfItems.Pack.Count; i++)
+        {
+            GhostRow = GhostRow && ShelfItems.Pack.IsEmptyAt(i);
+        }
+
+        if (!GhostRow)
+        {
+            int numGhostItems = ShelfItems.Pack.Count % ShelfItems.InvWidth;
+            for (int i = 0; i < numGhostItems; i++)
+            {
+                ShelfItems.Pack.PutItem(o_ShelfItems.Pack.Count, null);
+            }
+      }
+
+    }
+
+    private void RemoveGhostItems(ItemView ShelfItems)
+    {
+      if (ShelfItems.Pack.IsEmptyAt(ShelfItems.Pack.Count-1))
+      {
+        ShelfItems.Pack.RemoveItemsAt(ShelfItems.Pack.Count-1);
+      }
     }
 
 }
